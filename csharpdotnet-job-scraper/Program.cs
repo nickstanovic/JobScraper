@@ -14,75 +14,45 @@ string indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={enc
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
 var context = await browser.NewContextAsync();
-
-
 var openPage = await context.NewPageAsync();
 await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
-await context.CloseAsync();
+// todo: add click behavior to get each job description, currently only first job description is retrieved
+// todo: properly organize scraping loop to mimic listings
+// todo: add pagination to scrape all listings
+// todo: may think of more things at a later time
 
-/*
- 
------
-Indeed.com retrieve all job titles, company names, locations, days ago posted, and job description in vanilla javascript
------
-job titles:
-
-const spanElements = document.querySelectorAll('span');
-
-spanElements.forEach((element) => {
-  const titleValue = element.title;
-  console.log(titleValue);
-});
-
----
-company names:
-
-const companyNames = document.querySelectorAll('span.companyName');
-
-companyNames.forEach(function(element) {
-  console.log(element.innerText);
-});
-
----
-locations:
-
-const companyLocations = document.querySelectorAll('div.companyLocation');
-
-companyLocations.forEach((element) => {
-  const textContent = element.textContent.trim();
-  console.log(textContent);
-});
-
----
-descriptions:
-
-const parentElement = document.getElementById('jobDescriptionText');
-
-function extractTextContent(element) {
-  let text = '';
-
-// Loop through each child node of the current element
-  for (let i = 0; i < element.childNodes.length; i++) {
-    const childNode = element.childNodes[i];
-
-// Check if the child node is a text node
-    if (childNode.nodeType === Node.TEXT_NODE) {
-      // Extract the text content and append it to the result
-      text += childNode.textContent.trim();
-    } else if (childNode.nodeType === Node.ELEMENT_NODE) {
-      // Recursively call the function for child elements
-      text += extractTextContent(childNode);
-    }
-  }
-
-  return text;
+// get job titles
+var titleElements = await openPage.QuerySelectorAllAsync("span");
+var titles = await Task.WhenAll(titleElements.Select(async t => await t.GetAttributeAsync("title")));
+foreach (var title in titles)
+{
+    Console.WriteLine(title);
 }
 
-const extractedText = extractTextContent(parentElement);
+// get company names
+var companyElements = await openPage.QuerySelectorAllAsync("span.companyName");
+var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.InnerTextAsync()));
+foreach (var name in companyNames)
+{
+    Console.WriteLine(name);
+}
 
-console.log(extractedText)
----
+// get locations
+var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
+var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
+foreach (var loc in locations)
+{
+    Console.WriteLine(loc);
+}
 
-*/
+// get job description
+var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
+if (jobDescriptionElement != null)
+{
+    var description = await jobDescriptionElement.InnerTextAsync();
+    Console.WriteLine(description);
+}
+
+await context.CloseAsync();
