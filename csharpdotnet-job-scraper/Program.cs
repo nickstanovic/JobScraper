@@ -18,41 +18,34 @@ var openPage = await context.NewPageAsync();
 await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
-// todo: add click behavior to get each job description, currently only first job description is retrieved
-// todo: properly organize scraping loop to mimic listings
-// todo: add pagination to scrape all listings
-// todo: may think of more things at a later time
-
 // get job titles
 var titleElements = await openPage.QuerySelectorAllAsync("span");
 var titles = await Task.WhenAll(titleElements.Select(async t => await t.GetAttributeAsync("title")));
-foreach (var title in titles)
-{
-    Console.WriteLine(title);
-}
-
 // get company names
 var companyElements = await openPage.QuerySelectorAllAsync("span.companyName");
 var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.InnerTextAsync()));
-foreach (var name in companyNames)
-{
-    Console.WriteLine(name);
-}
-
 // get locations
 var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
 var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
-foreach (var loc in locations)
+
+// todo: add click behavior to get each job description, currently only first job description is retrieved
+// todo: add pagination to scrape all listings
+
+int titleCount = titles.Count(t => t != null);
+for (int i = 0; i < titleCount; i++)
 {
-    Console.WriteLine(loc);
+    Console.WriteLine(titles[i]);
+    Console.WriteLine(companyNames[i]);
+    Console.WriteLine(locations[i]);
 }
 
+
 // get job description
-var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
-if (jobDescriptionElement != null)
-{
-    var description = await jobDescriptionElement.InnerTextAsync();
-    Console.WriteLine(description);
-}
+// var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
+// if (jobDescriptionElement != null)
+// {
+//     var description = await jobDescriptionElement.InnerTextAsync();
+//     Console.WriteLine(description);
+// }
 
 await context.CloseAsync();
