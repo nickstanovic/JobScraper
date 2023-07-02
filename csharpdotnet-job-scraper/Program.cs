@@ -28,6 +28,8 @@ var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.
 var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
 var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
+// todo: eliminate titleElements nulls (266 nulls - lambda int titleCount = titles.Count(t => t != null); is only a band-aid)
+// todo: fix titles not logging (most likely due to nulls from Indeed poor site design)
 // todo: add click behavior to get each job description, currently only first job description is retrieved
 // todo: add pagination to scrape all listings
 
