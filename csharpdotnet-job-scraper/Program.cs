@@ -3,7 +3,7 @@
 string jobSearchTerm = "C#";
 string location = "Cuyahoga Falls, OH";
 int radius = 50;
-int secondsToWait = 7;
+int secondsToWait = 10;
 
 string encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
 string encodedLocation = System.Web.HttpUtility.UrlEncode(location);
@@ -18,8 +18,8 @@ await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
 
-// todo: add click behavior to get each job description, currently only first job description is retrieved
 // todo: add pagination to scrape all listings
+// todo: add key terms filter to list the highest amount of matches first
 
 // Get job titles
 var titleElements = await openPage.QuerySelectorAllAsync("h2.jobTitle");
@@ -33,11 +33,33 @@ var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.
 var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
 var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
+// Prepare a list for descriptions
+var descriptions = new List<string>();
+
 for (int i = 0; i < titles.Length; i++)
 {
-    Console.WriteLine(titles[i]);
-    Console.WriteLine(companyNames[i]);
-    Console.WriteLine(locations[i]);
+    // Click the job title to load the description
+    await titleElements[i].ClickAsync();
+
+    // Wait for the description to load
+    await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
+
+    // Get the job description
+    var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
+    string description = await jobDescriptionElement.InnerTextAsync();
+
+    descriptions.Add(description);
+}
+
+for (int i = 0; i < titles.Length; i++)
+{
+    Console.ForegroundColor = ConsoleColor.Cyan;
+    Console.WriteLine("############################################################");
+    Console.ResetColor();
+    Console.WriteLine($"Job Title: {titles[i]}");
+    Console.WriteLine($"Company {companyNames[i]}");
+    Console.WriteLine($"Location: {locations[i]}");
+    Console.WriteLine($"Description: {descriptions[i]}");
     Console.WriteLine();
 }
 
