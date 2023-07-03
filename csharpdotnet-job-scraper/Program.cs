@@ -4,6 +4,11 @@ string jobSearchTerm = "C#";
 string location = "Cuyahoga Falls, OH";
 int radius = 50;
 int secondsToWait = 10;
+string[] keywords =
+{
+    "C#", ".net", "sql", "angular", "javascript", "git", "html", "css", "tailwind", "typescript", "node", "python",
+    "material ui", "bootstrap"
+};
 
 string encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
 string encodedLocation = System.Web.HttpUtility.UrlEncode(location);
@@ -19,7 +24,6 @@ await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
 
 // todo: add pagination to scrape all listings
-// todo: add key terms filter to list the highest amount of matches first
 
 // Get job titles
 var titleElements = await openPage.QuerySelectorAllAsync("h2.jobTitle");
@@ -33,22 +37,28 @@ var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.
 var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
 var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
-// Prepare a list for descriptions
 var descriptions = new List<string>();
+var foundKeywords = new Dictionary<string, List<string>>();
 
 for (int i = 0; i < titles.Length; i++)
 {
     // Click the job title to load the description
     await titleElements[i].ClickAsync();
-
-    // Wait for the description to load
     await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
     // Get the job description
     var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
     string description = await jobDescriptionElement.InnerTextAsync();
-
+    
     descriptions.Add(description);
+    foundKeywords[description] = new List<string>();
+    foreach (string keyword in keywords)
+    {
+        if (description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+        {
+            foundKeywords[description].Add(keyword);
+        }
+    }
 }
 
 for (int i = 0; i < titles.Length; i++)
@@ -57,9 +67,17 @@ for (int i = 0; i < titles.Length; i++)
     Console.WriteLine("############################################################");
     Console.ResetColor();
     Console.WriteLine($"Job Title: {titles[i]}");
-    Console.WriteLine($"Company {companyNames[i]}");
+    Console.WriteLine($"Company: {companyNames[i]}");
     Console.WriteLine($"Location: {locations[i]}");
+    if (foundKeywords[descriptions[i]].Any())
+    {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"Number of keywords found: {foundKeywords[descriptions[i]].Count}");
+        Console.WriteLine($"Found keywords: {string.Join(", ", foundKeywords[descriptions[i]])}");
+        Console.ResetColor();
+    }
     Console.WriteLine($"Description: {descriptions[i]}");
+
     Console.WriteLine();
 }
 
