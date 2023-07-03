@@ -27,4 +27,4 @@ This project requires .NET and the Microsoft Playwright CLI. If you don't have t
 2. Edit the `jobSearchTerm`, `location`, `radius`, and `secondsToWaits` variables in `Program.cs` to customize your job search.
 
 <span style="color: green">Recommended:</span> Be nice to people's servers by not lowering the `secondsToWait` variable too low. <font size="1">(keep yourself from being banned from the site)</font>
-3. Run the project. The scraper will open a browser, navigate to Indeed.com with your search parameters, and scrape the job data. for running the project if there are additional setup steps. Similarly, you might need to adjust the Contributing and License sections to match your project's policies.
+3. Run the project. The scraper will open a browser, navigate to Indeed.com with your search parameters, and scrape the job data.
