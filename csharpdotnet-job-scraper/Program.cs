@@ -17,11 +17,17 @@ string encodedLocation = System.Web.HttpUtility.UrlEncode(location);
 string indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={radius}";
 
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
-var context = await browser.NewContextAsync();
+await using var browser = await playwright.Firefox.LaunchAsync();
+var context = await browser.NewContextAsync(new BrowserNewContextOptions 
+{ 
+    UserAgent = "Mozilla/5.0 (Windows NT 10.0; rv:114.0) Gecko/20100101 Firefox/114.0" 
+});
 var openPage = await context.NewPageAsync();
 await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
+
+// todo: add logic to handle multiple pages of results
+// todo: add scraping zip recruiter, linkedin, and monster
 
 // Get job titles
 var titleElements = await openPage.QuerySelectorAllAsync("h2.jobTitle");
