@@ -1,5 +1,5 @@
 ﻿using Microsoft.Playwright;
-
+using indeed_scraper;
 
 string jobSearchTerm = "C#";
 string location = "Cuyahoga Falls, OH";
@@ -125,12 +125,3 @@ foreach (var job in sortedJobs)
 }
 
 await context.CloseAsync();
-
-internal class Job
-{
-    public string Title { get; init; }
-    public string CompanyName { get; init; }
-    public string Location { get; init; }
-    public string Description { get; init; }
-    public List<string> FoundKeywords { get; init; }
-}
