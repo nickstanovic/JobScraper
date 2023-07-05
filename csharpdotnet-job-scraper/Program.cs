@@ -7,8 +7,8 @@ int radius = 50;
 int secondsToWait = 10;
 string[] keywords =
 {
-    "C#", ".net", "sql", "angular", "javascript", "git", "html", "css", "tailwind", "typescript", "node", "python",
-    "material ui", "bootstrap"
+    "C#", ".net", "sql", "blazor", "razor", "asp", "typescript", "javascript", "angular", "react", "svelte",  "git", 
+    "html", "css", "tailwind", "node", "python", "material ui", "bootstrap"
 };
 
 string encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
@@ -18,51 +18,61 @@ string indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={enc
 
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Firefox.LaunchAsync();
-var context = await browser.NewContextAsync(new BrowserNewContextOptions 
-{ 
-    UserAgent = "Mozilla/5.0 (Windows NT 10.0; rv:114.0) Gecko/20100101 Firefox/114.0" 
+var context = await browser.NewContextAsync(new BrowserNewContextOptions
+{
+    UserAgent = "Mozilla/5.0 (Windows NT 10.0; rv:114.0) Gecko/20100101 Firefox/114.0"
 });
 var openPage = await context.NewPageAsync();
 await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
-// todo: add logic to handle multiple pages of results
 // todo: add scraping zip recruiter, linkedin, and monster
-
-// Get job titles
-var titleElements = await openPage.QuerySelectorAllAsync("h2.jobTitle");
-var titles = await Task.WhenAll(titleElements.Select(async t => await t.InnerTextAsync()));
-
-// Get company names
-var companyElements = await openPage.QuerySelectorAllAsync("span.companyName");
-var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.InnerTextAsync()));
-
-// Get locations
-var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
-var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
 List<Job> jobs = new List<Job>();
 
-for (int i = 0; i < titles.Length; i++)
+bool hasNextPage = true;
+
+while (hasNextPage)
 {
-    // Click the job title to load the description
-    await titleElements[i].ClickAsync();
-    await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
+    var titleElements = await openPage.QuerySelectorAllAsync("h2.jobTitle");
+    var titles = await Task.WhenAll(titleElements.Select(async t => await t.InnerTextAsync()));
 
-    // Get the job description
-    var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
-    string description = await jobDescriptionElement.InnerTextAsync();
+    var companyElements = await openPage.QuerySelectorAllAsync("span.companyName");
+    var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.InnerTextAsync()));
 
-    List<string> foundKeywordsForJob = keywords.Where(keyword => description.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
+    var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
+    var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
-    jobs.Add(new Job
+    for (int i = 0; i < titles.Length; i++)
     {
-        Title = titles[i],
-        CompanyName = companyNames[i],
-        Location = locations[i],
-        Description = description,
-        FoundKeywords = foundKeywordsForJob
-    });
+        await titleElements[i].ClickAsync();
+        await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
+
+        var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
+        string description = await jobDescriptionElement.InnerTextAsync();
+
+        List<string> foundKeywordsForJob = keywords.Where(keyword => description.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        jobs.Add(new Job
+        {
+            Title = titles[i],
+            CompanyName = companyNames[i],
+            Location = locations[i],
+            Description = description,
+            FoundKeywords = foundKeywordsForJob
+        });
+    }
+
+    var nextButton = await openPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
+    if (nextButton != null)
+    {
+        await nextButton.ClickAsync();
+        await openPage.WaitForNavigationAsync();
+    }
+    else
+    {
+        hasNextPage = false;
+    }
 }
 
 var sortedJobs = jobs.OrderByDescending(job => job.FoundKeywords.Count);
