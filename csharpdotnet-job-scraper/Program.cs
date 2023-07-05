@@ -26,6 +26,11 @@ var openPage = await context.NewPageAsync();
 await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
+// todo: add count of jobs found
+// todo: add running count of jobs scraped (1/100... 2/100... etc)
+// todo: add status: scraping in progress... scraping complete / sorting in progress... sorting complete
+// todo: store in sql database
+// todo: make gui
 // todo: add scraping zip recruiter, linkedin, and monster
 
 List<Job> jobs = new List<Job>();
