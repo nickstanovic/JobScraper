@@ -7,8 +7,8 @@ int radius = 50;
 int secondsToWait = 10;
 string[] keywords =
 {
-    "C#", ".net", "sql", "blazor", "razor", "asp", "typescript", "javascript", "angular", "react", "svelte",  "git", 
-    "html", "css", "tailwind", "node", "python", "material ui", "bootstrap"
+    "C#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "typescript", "javascript", "angular", "vue", "python",
+    "git", "html", "css", "tailwind", "material", "bootstrap"
 };
 string[] avoidJobKeywords =
 {
@@ -30,19 +30,19 @@ var openPage = await context.NewPageAsync();
 await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
-// todo: add count of jobs found
-// todo: add running count of jobs scraped (1/100... 2/100... etc)
-// todo: add status: scraping in progress... scraping complete / sorting in progress... sorting complete
-// todo: store in sql database
-// todo: make gui
+// todo: store in sql database w/ ef core
+// todo: make web app gui (either angular or blazor haven't decided yet)
 // todo: add scraping zip recruiter, linkedin, and monster
 
 List<Job> jobs = new List<Job>();
-
+int pageCount = 0;
 bool hasNextPage = true;
 
 while (hasNextPage)
 {
+    pageCount++;
+    Console.WriteLine($"Scraping page {pageCount}...");
+
     var titleElements = await openPage.QuerySelectorAllAsync("h2.jobTitle");
     var titles = await Task.WhenAll(titleElements.Select(async t => await t.InnerTextAsync()));
 
@@ -78,6 +78,8 @@ while (hasNextPage)
         });
     }
 
+    Console.WriteLine($"Page {pageCount} complete.");
+
     var nextButton = await openPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
     if (nextButton != null)
     {
@@ -90,7 +92,18 @@ while (hasNextPage)
     }
 }
 
+// added delays for console output readability
+Console.WriteLine("Scraping complete.");
+await Task.Delay(5000);
+Console.WriteLine("Starting sorting process...");
+await Task.Delay(5000);
+Console.WriteLine("This could take several minutes, depending on the number of pages...");
+
 var sortedJobs = jobs.OrderByDescending(job => job.FoundKeywords.Count);
+
+Console.WriteLine("Sorting complete.");
+Console.WriteLine();
+await Task.Delay(5000);
 
 foreach (var job in sortedJobs)
 {
