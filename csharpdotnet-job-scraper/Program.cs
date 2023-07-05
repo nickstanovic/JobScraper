@@ -10,6 +10,10 @@ string[] keywords =
     "C#", ".net", "sql", "blazor", "razor", "asp", "typescript", "javascript", "angular", "react", "svelte",  "git", 
     "html", "css", "tailwind", "node", "python", "material ui", "bootstrap"
 };
+string[] avoidJobKeywords =
+{
+    "lead", "senior"
+};
 
 string encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
 string encodedLocation = System.Web.HttpUtility.UrlEncode(location);
@@ -57,6 +61,12 @@ while (hasNextPage)
         string description = await jobDescriptionElement.InnerTextAsync();
 
         List<string> foundKeywordsForJob = keywords.Where(keyword => description.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        // Skip this job if it contains undesired keywords in the title
+        if (avoidJobKeywords.Any(uk => titles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
+        {
+            continue;
+        }
 
         jobs.Add(new Job
         {
