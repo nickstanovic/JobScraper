@@ -7,7 +7,7 @@ int radius = 50;
 int secondsToWait = 10;
 string[] keywords =
 {
-    "C#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "typescript", "javascript", "angular", "vue", "python",
+    "C#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "typescript", "javascript", "angular", "vue", "svelte",
     "git", "html", "css", "tailwind", "material", "bootstrap"
 };
 string[] avoidJobKeywords =
