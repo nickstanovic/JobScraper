@@ -1,7 +1,7 @@
 ﻿using Microsoft.Playwright;
 using indeed_scraper;
 
-string jobSearchTerm = "C#";
+string jobSearchTerm = "ruby";
 string location = "Cuyahoga Falls, OH";
 int radius = 50;
 int secondsToWait = 10;
@@ -84,7 +84,6 @@ while (hasNextPage)
     if (nextButton != null)
     {
         await nextButton.ClickAsync();
-        await openPage.WaitForNavigationAsync();
     }
     else
     {
