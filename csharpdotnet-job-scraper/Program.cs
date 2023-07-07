@@ -1,24 +1,24 @@
 ﻿using Microsoft.Playwright;
 using indeed_scraper;
 
-string jobSearchTerm = "ruby";
-string location = "Cuyahoga Falls, OH";
-int radius = 50;
-int secondsToWait = 10;
+const string jobSearchTerm = "C#";
+const string location = "Cuyahoga Falls, OH";
+const int radius = 50;
+const int secondsToWait = 10;
 string[] keywords =
 {
-    "C#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "typescript", "javascript", "angular", "vue", "svelte",
-    "git", "html", "css", "tailwind", "material", "bootstrap"
+    "C#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "typescript", "javascript", "angular", "git", "html", 
+    "css", "tailwind", "material", "bootstrap"
 };
 string[] avoidJobKeywords =
 {
     "lead", "senior"
 };
 
-string encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
-string encodedLocation = System.Web.HttpUtility.UrlEncode(location);
+var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
+var encodedLocation = System.Web.HttpUtility.UrlEncode(location);
 
-string indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={radius}";
+var indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={radius}";
 
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Firefox.LaunchAsync();
@@ -34,9 +34,9 @@ await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 // todo: make web app gui (either angular or blazor haven't decided yet)
 // todo: add scraping zip recruiter, linkedin, and monster
 
-List<Job> jobs = new List<Job>();
-int pageCount = 0;
-bool hasNextPage = true;
+var jobs = new List<Job>();
+var pageCount = 0;
+var hasNextPage = true;
 
 while (hasNextPage)
 {
@@ -52,15 +52,16 @@ while (hasNextPage)
     var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
     var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
-    for (int i = 0; i < titles.Length; i++)
+    for (var i = 0; i < titles.Length; i++)
     {
         await titleElements[i].ClickAsync();
         await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
         var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
-        string description = await jobDescriptionElement.InnerTextAsync();
+        var description = await jobDescriptionElement.InnerTextAsync();
 
-        List<string> foundKeywordsForJob = keywords.Where(keyword => description.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
+        var foundKeywordsForJob = keywords
+            .Where(keyword => description.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
 
         // Skip this job if it contains undesired keywords in the title
         if (avoidJobKeywords.Any(uk => titles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
@@ -119,6 +120,7 @@ foreach (var job in sortedJobs)
         Console.WriteLine($"Found keywords: {string.Join(", ", job.FoundKeywords)}");
         Console.ResetColor();
     }
+
     Console.WriteLine($"Description: {job.Description}");
     Console.WriteLine();
 }
