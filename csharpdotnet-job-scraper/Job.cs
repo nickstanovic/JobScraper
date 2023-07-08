@@ -1,11 +1,9 @@
-﻿namespace indeed_scraper
+﻿public class Job
 {
-    public class Job
-    {
-        public string Title { get; init; }
-        public string CompanyName { get; init; }
-        public string Location { get; init; }
-        public string Description { get; init; }
-        public List<string> FoundKeywords { get; init; }
-    }
+    public int Id { get; set; }
+    public string Title { get; set; }
+    public string CompanyName { get; set; }
+    public string Location { get; set; }
+    public string Description { get; set; }
+    public string FoundKeywords { get; set; }  // Modified to be storable in DB
 }
