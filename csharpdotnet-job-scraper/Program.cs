@@ -30,99 +30,75 @@ var openPage = await context.NewPageAsync();
 await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
-// todo: store in sql database w/ ef core
-// todo: make web app gui (either angular or blazor haven't decided yet)
 // todo: add scraping zip recruiter, linkedin, and monster
+// todo: make web app gui (either angular or blazor haven't decided yet)
 
-var jobs = new List<Job>();
-var pageCount = 0;
-var hasNextPage = true;
-
-while (hasNextPage)
+using (var db = new JobDbContext())
 {
-    pageCount++;
-    Console.WriteLine($"Scraping page {pageCount}...");
+    db.Database.EnsureCreated(); 
 
-    var titleElements = await openPage.QuerySelectorAllAsync("h2.jobTitle");
-    var titles = await Task.WhenAll(titleElements.Select(async t => await t.InnerTextAsync()));
+    var pageCount = 0;
+    var hasNextPage = true;
 
-    var companyElements = await openPage.QuerySelectorAllAsync("span.companyName");
-    var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.InnerTextAsync()));
-
-    var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
-    var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
-
-    for (var i = 0; i < titles.Length; i++)
+    while (hasNextPage)
     {
-        await titleElements[i].ClickAsync();
-        await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
+        pageCount++;
+        Console.WriteLine($"Scraping page {pageCount}...");
 
-        var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
-        var description = await jobDescriptionElement.InnerTextAsync();
+        var titleElements = await openPage.QuerySelectorAllAsync("h2.jobTitle");
+        var titles = await Task.WhenAll(titleElements.Select(async t => await t.InnerTextAsync()));
 
-        var foundKeywordsForJob = keywords
-            .Where(keyword => description.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
+        var companyElements = await openPage.QuerySelectorAllAsync("span.companyName");
+        var companyNames = await Task.WhenAll(companyElements.Select(async c => await c.InnerTextAsync()));
 
-        // Skip this job if it contains undesired keywords in the title
-        if (avoidJobKeywords.Any(uk => titles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
+        var locationElements = await openPage.QuerySelectorAllAsync("div.companyLocation");
+        var locations = await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
+
+        for (var i = 0; i < titles.Length; i++)
         {
-            continue;
+            await titleElements[i].ClickAsync();
+            await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
+
+            var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
+            var description = await jobDescriptionElement.InnerTextAsync();
+
+            var foundKeywordsForJob = keywords
+                .Where(keyword => description.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (avoidJobKeywords.Any(uk => titles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var job = new Job
+            {
+                Title = titles[i],
+                CompanyName = companyNames[i],
+                Location = locations[i],
+                Description = description,
+                FoundKeywords = string.Join(",", foundKeywordsForJob)
+            };
+
+            db.Jobs.Add(job);
         }
+        
+        await db.SaveChangesAsync();
 
-        jobs.Add(new Job
+        Console.WriteLine($"Page {pageCount} complete.");
+
+        var nextButton = await openPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
+        if (nextButton != null)
         {
-            Title = titles[i],
-            CompanyName = companyNames[i],
-            Location = locations[i],
-            Description = description,
-            FoundKeywords = foundKeywordsForJob
-        });
+            await nextButton.ClickAsync();
+        }
+        else
+        {
+            hasNextPage = false;
+        }
     }
 
-    Console.WriteLine($"Page {pageCount} complete.");
+    Console.WriteLine("Scraping complete.");
 
-    var nextButton = await openPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
-    if (nextButton != null)
-    {
-        await nextButton.ClickAsync();
-    }
-    else
-    {
-        hasNextPage = false;
-    }
+
+    await context.CloseAsync();
 }
-
-// added delays for console output readability
-Console.WriteLine("Scraping complete.");
-await Task.Delay(5000);
-Console.WriteLine("Starting sorting process...");
-await Task.Delay(5000);
-Console.WriteLine("This could take several minutes, depending on the number of pages...");
-
-var sortedJobs = jobs.OrderByDescending(job => job.FoundKeywords.Count);
-
-Console.WriteLine("Sorting complete.");
-Console.WriteLine();
-await Task.Delay(5000);
-
-foreach (var job in sortedJobs)
-{
-    Console.ForegroundColor = ConsoleColor.Cyan;
-    Console.WriteLine("############################################################");
-    Console.ResetColor();
-    Console.WriteLine($"Job Title: {job.Title}");
-    Console.WriteLine($"Company: {job.CompanyName}");
-    Console.WriteLine($"Location: {job.Location}");
-    if (job.FoundKeywords.Any())
-    {
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"Number of keywords found: {job.FoundKeywords.Count}");
-        Console.WriteLine($"Found keywords: {string.Join(", ", job.FoundKeywords)}");
-        Console.ResetColor();
-    }
-
-    Console.WriteLine($"Description: {job.Description}");
-    Console.WriteLine();
-}
-
-await context.CloseAsync();
