@@ -7,8 +7,8 @@ const int radius = 50;
 const int secondsToWait = 10;
 string[] keywords =
 {
-    "C#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "typescript", "javascript", "angular", "git", "html", 
-    "css", "tailwind", "material", "bootstrap"
+    "c#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "entity framework", "typescript", "javascript", 
+    "angular", "git", "html", "css", "tailwind", "material", "bootstrap"
 };
 string[] avoidJobKeywords =
 {
@@ -30,12 +30,11 @@ var openPage = await context.NewPageAsync();
 await openPage.GotoAsync(indeedUrl);
 await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
-// todo: add scraping zip recruiter, linkedin, and monster
-// todo: make web app gui (either angular or blazor haven't decided yet)
+// todo: add linkedin, zip recruiter, monster
 
 using (var db = new JobDbContext())
 {
-    db.Database.EnsureCreated(); 
+    db.Database.EnsureCreated();
 
     var pageCount = 0;
     var hasNextPage = true;
@@ -62,6 +61,24 @@ using (var db = new JobDbContext())
             var jobDescriptionElement = await openPage.QuerySelectorAsync("#jobDescriptionText");
             var description = await jobDescriptionElement.InnerTextAsync();
 
+            var applyUrlElement = await openPage.QuerySelectorAsync("span[data-indeed-apply-joburl], " +
+                                                                    "button[href*='https://www.indeed.com/applystart?jk=']");
+            string applyUrl = null;
+            if (applyUrlElement != null)
+            {
+                // Indeed apply button has two different URL patterns to scrape
+                // depending on if the button displays: 'Apply now' or 'Apply at company site'
+                // Apply now
+                var indeedApplyJobUrl = await applyUrlElement.GetAttributeAsync("data-indeed-apply-joburl");
+                // Apply at company site
+                var href = await applyUrlElement.GetAttributeAsync("href");
+
+                if (!string.IsNullOrEmpty(indeedApplyJobUrl))
+                    applyUrl = indeedApplyJobUrl;
+                else if (!string.IsNullOrEmpty(href))
+                    applyUrl = href.Split('&')[0];
+            }
+
             var foundKeywordsForJob = keywords
                 .Where(keyword => description.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
 
@@ -72,24 +89,27 @@ using (var db = new JobDbContext())
 
             var job = new Job
             {
+                SearchTerm = jobSearchTerm,
                 Title = titles[i],
                 CompanyName = companyNames[i],
                 Location = locations[i],
                 Description = description,
-                FoundKeywords = string.Join(",", foundKeywordsForJob)
+                FoundKeywords = string.Join(",", foundKeywordsForJob),
+                ApplyUrl = applyUrl,
+                ScrapedAt = DateTime.Now,
             };
 
             db.Jobs.Add(job);
         }
-        
-        await db.SaveChangesAsync();
 
+        await db.SaveChangesAsync();
         Console.WriteLine($"Page {pageCount} complete.");
 
         var nextButton = await openPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
         if (nextButton != null)
         {
             await nextButton.ClickAsync();
+            await openPage.WaitForTimeoutAsync(secondsToWait * 1000);
         }
         else
         {
@@ -98,7 +118,6 @@ using (var db = new JobDbContext())
     }
 
     Console.WriteLine("Scraping complete.");
-
-
+    
     await context.CloseAsync();
 }
