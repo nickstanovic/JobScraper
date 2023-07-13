@@ -5,8 +5,9 @@ const string jobSearchTerm = "C#";
 const string location = "Cuyahoga Falls, OH";
 const int radius = 50;
 const int secondsToWait = 10;
+const int indeedListingAge = 14; // 1 day - 1, 3 days - 3, 7 days - 7, 14 days - 14, 30 days - 30
 const int experience = 2; // 1 - Internship, 2 - Entry Level, 3 - Associate, 4 - Mid-Senior, 5 - Senior, 6 - Executive
-const int listingAge = 86400; // 3600 - 1 hour, 86400 - 1 day, 1 week - 604800, 2 weeks - 1209600, 30 days - 2592000
+const int linkedinListingAge = 86400; // 3600 - 1 hour, 86400 - 1 day, 1 week - 604800, 2 weeks - 1209600, 30 days - 2592000
 string[] keywords =
 {
     "c#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "entity framework", "typescript", "javascript", 
@@ -21,9 +22,10 @@ string[] avoidJobKeywords =
 var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
 var encodedLocation = System.Web.HttpUtility.UrlEncode(location);
 
-var indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={radius}";
-var linkedinUrl = $"https://www.linkedin.com/jobs/search/?distance={radius}&f_E={experience}&f_TPR=r{listingAge}&keywords={encodedJobSearchTerm}&location={encodedLocation}";
+var indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={radius}&fromage={indeedListingAge}";
+var linkedinUrl = $"https://www.linkedin.com/jobs/search/?distance={radius}&f_E={experience}&f_TPR=r{linkedinListingAge}&keywords={encodedJobSearchTerm}&location={encodedLocation}";
 
+// todo: add zip recruiter and monster
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Firefox.LaunchAsync();
 var context = await browser.NewContextAsync(new BrowserNewContextOptions
