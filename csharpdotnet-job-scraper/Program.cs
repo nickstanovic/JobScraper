@@ -25,6 +25,7 @@ var encodedLocation = System.Web.HttpUtility.UrlEncode(location);
 var indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={radius}&fromage={indeedListingAge}";
 var linkedinUrl = $"https://www.linkedin.com/jobs/search/?distance={radius}&f_E={experience}&f_TPR=r{linkedinListingAge}&keywords={encodedJobSearchTerm}&location={encodedLocation}";
 
+// todo: fix linkedin description scraping
 // todo: add zip recruiter and monster
 
 using var playwright = await Playwright.CreateAsync();
@@ -140,7 +141,7 @@ using (var db = new JobDbContext())
 
     var linkedinLocationElements = await linkedinPage.QuerySelectorAllAsync("span.job-search-card__location");
     var linkedinLocations = await Task.WhenAll(linkedinLocationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
-
+    // Apply buttons are javascript events rather than links, unable to parse
     // var linkedinApplyElements = await linkedinPage.QuerySelectorAllAsync("a.job-card-list__title");
     // var linkedinApplyUrls = await Task.WhenAll(linkedinApplyElements.Select(async l => await l.GetAttributeAsync("href")));
     //  
