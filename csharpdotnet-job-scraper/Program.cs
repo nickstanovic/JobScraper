@@ -7,7 +7,7 @@ const int radius = 50;
 const int secondsToWait = 10;
 const int indeedListingAge = 14; // 1 day - 1, 3 days - 3, 7 days - 7, 14 days - 14, 30 days - 30
 const int experience = 2; // 1 - Internship, 2 - Entry Level, 3 - Associate, 4 - Mid-Senior, 5 - Senior, 6 - Executive
-const int linkedinListingAge = 86400; // 3600 - 1 hour, 86400 - 1 day, 1 week - 604800, 2 weeks - 1209600, 30 days - 2592000
+const int linkedinListingAge = 1209600; // 3600 - 1 hour, 86400 - 1 day, 1 week - 604800, 2 weeks - 1209600, 30 days - 2592000
 string[] keywords =
 {
     "c#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "entity framework", "typescript", "javascript", 
@@ -26,6 +26,7 @@ var indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encode
 var linkedinUrl = $"https://www.linkedin.com/jobs/search/?distance={radius}&f_E={experience}&f_TPR=r{linkedinListingAge}&keywords={encodedJobSearchTerm}&location={encodedLocation}";
 
 // todo: add zip recruiter and monster
+
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Firefox.LaunchAsync();
 var context = await browser.NewContextAsync(new BrowserNewContextOptions
@@ -38,6 +39,8 @@ await indeedPage.WaitForTimeoutAsync(secondsToWait * 1000);
 var linkedinPage = await context.NewPageAsync();
 await linkedinPage.GotoAsync(linkedinUrl);
 await linkedinPage.WaitForTimeoutAsync(secondsToWait * 1000);
+
+// todo: zip recruiter, monster
 
 using (var db = new JobDbContext())
 {
@@ -73,7 +76,11 @@ using (var db = new JobDbContext())
             string indeedApplyUrl = null;
             if (indeedApplyUrlElement != null)
             {
+                // Indeed apply button has two different URL patterns to scrape
+                // depending on if the button displays: 'Apply now' or 'Apply at company site'
+                // Apply now
                 var indeedApplyJobUrl = await indeedApplyUrlElement.GetAttributeAsync("data-indeed-apply-joburl");
+                // Apply at company site
                 var href = await indeedApplyUrlElement.GetAttributeAsync("href");
 
                 if (!string.IsNullOrEmpty(indeedApplyJobUrl))
@@ -89,24 +96,21 @@ using (var db = new JobDbContext())
             {
                 continue;
             }
-            
-            if (foundKeywordsForJob.Any())
-            {
-                var job = new Job
-                {
-                    Origin = "Indeed",
-                    SearchTerm = jobSearchTerm,
-                    Title = titles[i],
-                    CompanyName = companyNames[i],
-                    Location = locations[i],
-                    Description = indeedDescription,
-                    FoundKeywords = string.Join(",", foundKeywordsForJob),
-                    ApplyUrl = indeedApplyUrl,
-                    ScrapedAt = DateTime.Now,
-                };
 
-                db.Jobs.Add(job);
-            }
+            var job = new Job
+            {
+                Origin = "Indeed",
+                SearchTerm = jobSearchTerm,
+                Title = titles[i],
+                CompanyName = companyNames[i],
+                Location = locations[i],
+                Description = indeedDescription,
+                FoundKeywords = string.Join(",", foundKeywordsForJob),
+                ApplyUrl = indeedApplyUrl,
+                ScrapedAt = DateTime.Now,
+            };
+
+            db.Jobs.Add(job);
         }
 
         await db.SaveChangesAsync();
@@ -128,7 +132,7 @@ using (var db = new JobDbContext())
 
     // Begin LinkedIn scraping
 
-    var linkedinTitleElements = await linkedinPage.QuerySelectorAllAsync("span.sr-only");
+    var linkedinTitleElements = await linkedinPage.QuerySelectorAllAsync("h3.base-search-card__title");
     var linkedinTitles = await Task.WhenAll(linkedinTitleElements.Select(async t => await t.InnerTextAsync()));
 
     var linkedinCompanyElements = await linkedinPage.QuerySelectorAllAsync("a.hidden-nested-link");
@@ -137,13 +141,13 @@ using (var db = new JobDbContext())
     var linkedinLocationElements = await linkedinPage.QuerySelectorAllAsync("span.job-search-card__location");
     var linkedinLocations = await Task.WhenAll(linkedinLocationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
-    var linkedinApplyElements = await linkedinPage.QuerySelectorAllAsync("a.job-card-list__title");
-    var linkedinApplyUrls = await Task.WhenAll(linkedinApplyElements.Select(async l => await l.GetAttributeAsync("href")));
-
+    // var linkedinApplyElements = await linkedinPage.QuerySelectorAllAsync("a.job-card-list__title");
+    // var linkedinApplyUrls = await Task.WhenAll(linkedinApplyElements.Select(async l => await l.GetAttributeAsync("href")));
+    //  
     for (var i = 0; i < linkedinTitles.Length; i++)
     {
-        await linkedinPage.GotoAsync(linkedinApplyUrls[i]);
-        await linkedinPage.WaitForTimeoutAsync(secondsToWait * 1000);
+        // await linkedinPage.GotoAsync(linkedinApplyUrls[i]);
+        // await linkedinPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
         var linkedinJobDescriptionElement = await linkedinPage.QuerySelectorAsync(".description__text");
         var linkedinDescription = linkedinJobDescriptionElement != null ? await linkedinJobDescriptionElement.InnerTextAsync() : "";
@@ -156,27 +160,23 @@ using (var db = new JobDbContext())
             continue;
         }
 
-        // Only save the job if there are matching keywords in the description
-        if (foundKeywordsForJob.Any())
+        var job = new Job
         {
-            var job = new Job
-            {
-                Origin = "LinkedIn",
-                SearchTerm = jobSearchTerm,
-                Title = linkedinTitles[i],
-                CompanyName = linkedinCompanyNames[i],
-                Location = linkedinLocations[i],
-                Description = linkedinDescription,
-                FoundKeywords = string.Join(",", foundKeywordsForJob),
-                ApplyUrl = linkedinApplyUrls[i],
-                ScrapedAt = DateTime.Now,
-            };
+            Origin = "LinkedIn",
+            SearchTerm = jobSearchTerm,
+            Title = linkedinTitles[i],
+            CompanyName = linkedinCompanyNames[i],
+            Location = linkedinLocations[i],
+            Description = linkedinDescription,
+            FoundKeywords = string.Join(",", foundKeywordsForJob),
+            // ApplyUrl = linkedinApplyUrls[i],
+            ScrapedAt = DateTime.Now,
+        };
 
-            db.Jobs.Add(job);
-        }
+        db.Jobs.Add(job);
     }
-
+    
     await db.SaveChangesAsync();
-
-    Console.WriteLine("LinkedIn scraping complete.");
 }
+
+Console.WriteLine("LinkedIn scraping complete.");
