@@ -6,7 +6,7 @@ const string jobSearchTerm = "C#";
 const string location = "Cuyahoga Falls, OH";
 const int radius = 50;
 const int secondsToWait = 10;
-const int indeedListingAge = 14; // 1 day - 1, 3 days - 3, 7 days - 7, 14 days - 14, 30 days - 30
+const int indeedListingAge = 7; // 1 day - 1, 3 days - 3, 7 days - 7, 14 days - 14, 30 days - 30
 const int experience = 2; // 1 - Internship, 2 - Entry Level, 3 - Associate, 4 - Mid-Senior, 5 - Senior, 6 - Executive
 const int linkedinListingAge = 1209600; // 3600 - 1 hour, 86400 - 1 day, 1 week - 604800, 2 weeks - 1209600, 30 days - 2592000
 string[] keywords =
@@ -27,6 +27,7 @@ var indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encode
 var linkedinUrl = $"https://www.linkedin.com/jobs/search/?distance={radius}&f_E={experience}&f_TPR=r{linkedinListingAge}&keywords={encodedJobSearchTerm}&location={encodedLocation}";
 
 // todo: fix linkedin description scraping
+// todo: ** further separate classes and cleanup main **
 // todo: add zip recruiter and monster
 
 using var playwright = await Playwright.CreateAsync();
