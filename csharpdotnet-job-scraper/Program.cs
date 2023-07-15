@@ -1,4 +1,5 @@
-﻿using Microsoft.Playwright;
+﻿using System.Text.RegularExpressions;
+using Microsoft.Playwright;
 using indeed_scraper;
 
 const string jobSearchTerm = "C#";
@@ -151,8 +152,12 @@ using (var db = new JobDbContext())
         // await linkedinPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
         var linkedinJobDescriptionElement = await linkedinPage.QuerySelectorAsync(".description__text");
-        var linkedinDescription = linkedinJobDescriptionElement != null ? await linkedinJobDescriptionElement.InnerTextAsync() : "";
-
+        var linkedinDescription = linkedinJobDescriptionElement != null 
+            ? Regex.Replace(await linkedinJobDescriptionElement.InnerTextAsync(), @"\s{2,}", " ")
+            : "";
+        // Regex Explanation: Cleans up description significantly by matching any sequence of whitespace characters
+        // (spaces, tabs, line breaks etc.) which are repeated 2 or more times. It is replaced with a single space,
+        // effectively condensing all instances of multiple whitespaces down to a single space.
         var foundKeywordsForJob = keywords
             .Where(keyword => linkedinDescription.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToList();
 
