@@ -42,6 +42,7 @@ var linkedinPage = await context.NewPageAsync();
 await linkedinPage.GotoAsync(linkedinUrl);
 await linkedinPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
+// todo: separate scrapers into classes
 // todo: zip recruiter, monster
 
 using (var db = new JobDbContext())
@@ -142,14 +143,11 @@ using (var db = new JobDbContext())
 
     var linkedinLocationElements = await linkedinPage.QuerySelectorAllAsync("span.job-search-card__location");
     var linkedinLocations = await Task.WhenAll(linkedinLocationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
-    // Apply buttons are javascript events rather than links, unable to parse
-    // var linkedinApplyElements = await linkedinPage.QuerySelectorAllAsync("a.job-card-list__title");
-    // var linkedinApplyUrls = await Task.WhenAll(linkedinApplyElements.Select(async l => await l.GetAttributeAsync("href")));
-    //  
+
+    var linkedinApplyElements = await linkedinPage.QuerySelectorAllAsync("a.base-card__full-link");
+    var linkedinApplyUrls = await Task.WhenAll(linkedinApplyElements.Select(async l => await l.GetAttributeAsync("href")));
     for (var i = 0; i < linkedinTitles.Length; i++)
     {
-        // await linkedinPage.GotoAsync(linkedinApplyUrls[i]);
-        // await linkedinPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
         var linkedinJobDescriptionElement = await linkedinPage.QuerySelectorAsync(".description__text");
         var linkedinDescription = linkedinJobDescriptionElement != null 
@@ -175,8 +173,8 @@ using (var db = new JobDbContext())
             Location = linkedinLocations[i],
             Description = linkedinDescription,
             FoundKeywords = string.Join(",", foundKeywordsForJob),
-            // ApplyUrl = linkedinApplyUrls[i],
-            ScrapedAt = DateTime.Now,
+            ApplyUrl = linkedinApplyUrls[i],
+            ScrapedAt = DateTime.Now
         };
 
         db.Jobs.Add(job);
