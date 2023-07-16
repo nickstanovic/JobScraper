@@ -8,7 +8,7 @@ const int radius = 50;
 const int secondsToWait = 10;
 const int indeedListingAge = 7; // 1 day - 1, 3 days - 3, 7 days - 7, 14 days - 14, 30 days - 30
 const int experience = 2; // 1 - Internship, 2 - Entry Level, 3 - Associate, 4 - Mid-Senior, 5 - Senior, 6 - Executive
-const int linkedinListingAge = 1209600; // 3600 - 1 hour, 86400 - 1 day, 1 week - 604800, 2 weeks - 1209600, 30 days - 2592000
+const int linkedinListingAge = 604800; // 3600 - 1 hour, 86400 - 1 day, 1 week - 604800, 2 weeks - 1209600, 30 days - 2592000
 string[] keywords =
 {
     "c#", ".net", "sql", "blazor", "razor", "asp.net", "ef core", "entity framework", "typescript", "javascript", 
@@ -42,9 +42,6 @@ await indeedPage.WaitForTimeoutAsync(secondsToWait * 1000);
 var linkedinPage = await context.NewPageAsync();
 await linkedinPage.GotoAsync(linkedinUrl);
 await linkedinPage.WaitForTimeoutAsync(secondsToWait * 1000);
-
-// todo: separate scrapers into classes
-// todo: zip recruiter, monster
 
 using (var db = new JobDbContext())
 {
@@ -149,6 +146,8 @@ using (var db = new JobDbContext())
     var linkedinApplyUrls = await Task.WhenAll(linkedinApplyElements.Select(async l => await l.GetAttributeAsync("href")));
     for (var i = 0; i < linkedinTitles.Length; i++)
     {
+        await linkedinApplyElements[i].ClickAsync();
+        await linkedinPage.WaitForTimeoutAsync(secondsToWait * 1000);
 
         var linkedinJobDescriptionElement = await linkedinPage.QuerySelectorAsync(".description__text");
         var linkedinDescription = linkedinJobDescriptionElement != null 
