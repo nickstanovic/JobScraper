@@ -1,6 +1,6 @@
 # Job Scraper with C# and Playwright
 
-This project uses C# and Microsoft Playwright to scrape job data from Indeed.com.
+This project uses C# and Microsoft Playwright to scrape job data from Indeed and LinkedIn.
 
 ## Setup
 
