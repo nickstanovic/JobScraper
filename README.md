@@ -1,6 +1,6 @@
 # Job Scraper with C# and Playwright
 
-This project uses C# and Microsoft Playwright to scrape job data from Indeed.com.
+This project uses C# and Microsoft Playwright to scrape job data from Indeed and LinkedIn.
 
 ## Setup
 
@@ -48,7 +48,7 @@ This project requires .NET and the Microsoft Playwright CLI. If you don't have t
    ```
 
 
-The scraper will navigate to Indeed.com with your search parameters, scrape the job data, and store the listings in a database.
+The scraper will crawl Indeed and LinkedIn with your search parameters, scrape the job data, and store the listings in your database setup.
 
 
 <span style="color: green">**Recommended:**</span> Be nice to people's servers by not lowering the `secondsToWait` variable too low. <font size="1">(keep yourself from being banned from the site)</font>
