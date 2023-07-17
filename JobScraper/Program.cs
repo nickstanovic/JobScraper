@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.Playwright;
-using indeed_scraper;
+using JobScraper.Data;
+using JobScraper.Models;
 
 const string jobSearchTerm = "C#";
 const string location = "Cuyahoga Falls, OH";
@@ -26,8 +27,8 @@ var encodedLocation = System.Web.HttpUtility.UrlEncode(location);
 var indeedUrl = $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={radius}&fromage={indeedListingAge}";
 var linkedinUrl = $"https://www.linkedin.com/jobs/search/?distance={radius}&f_E={experience}&f_TPR=r{linkedinListingAge}&keywords={encodedJobSearchTerm}&location={encodedLocation}";
 
+// todo: ** finish refactoring codebase and correcting all code **
 // todo: add linkedin pagination
-// todo: ** further separate classes and cleanup main **
 // todo: add zip recruiter and monster
 
 using var playwright = await Playwright.CreateAsync();

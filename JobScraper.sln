@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "csharpdotnet-job-scraper", "csharpdotnet-job-scraper\csharpdotnet-job-scraper.csproj", "{6BE54D93-6C23-4496-888D-5A0976EBC6DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobScraper", "JobScraper\JobScraper.csproj", "{6BE54D93-6C23-4496-888D-5A0976EBC6DD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

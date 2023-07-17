@@ -1,4 +1,6 @@
-﻿public class Job
+﻿namespace JobScraper.Models;
+
+public class Job
 {
     public int Id { get; set; }
     public string? Origin { get; set; }
