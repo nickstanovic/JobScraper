@@ -9,11 +9,11 @@ namespace JobScraper.Scrapers
         private readonly string _linkedinUrl;
         private readonly IBrowserContext _context;
 
-        public LinkedInScraper(int linkedInListingAge, IBrowserContext context)
+        public LinkedInScraper(string jobSearchTerm, int linkedInListingAge, IBrowserContext context)
         {
-            var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(JobSearchTerm);
+            var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
             var encodedLocation = System.Web.HttpUtility.UrlEncode(Location);
-            _linkedinUrl = $"https://www.linkedin.com/jobs/search/?distance={Radius}&f_TPR=r{linkedInListingAge}&keywords={encodedJobSearchTerm}&location={encodedLocation}";
+            _linkedinUrl = $"https://www.linkedin.com/jobs/search/?distance={Radius}&f_TPR=r{linkedInListingAge * 86400}&keywords={encodedJobSearchTerm}&location={encodedLocation}";
             _context = context;
         }
 
@@ -24,7 +24,7 @@ namespace JobScraper.Scrapers
             var linkedinPage = await _context.NewPageAsync();
             await linkedinPage.GotoAsync(_linkedinUrl);
             await linkedinPage.WaitForTimeoutAsync(SecondsToWait * 1000);
-
+            Console.WriteLine($"LinkedIn scraping page 1...");
             var linkedinTitleElements = await linkedinPage.QuerySelectorAllAsync("h3.base-search-card__title");
             var linkedinTitles = await Task.WhenAll(linkedinTitleElements.Select(async t => await t.InnerTextAsync()));
 

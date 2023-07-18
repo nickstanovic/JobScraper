@@ -2,7 +2,6 @@
 {
     public static class ScraperConfig
     {
-        public static readonly string JobSearchTerm = "C#";
         public static readonly string Location = "Cuyahoga Falls, OH";
         public static readonly int Radius = 50;
         public static readonly int SecondsToWait = 10;

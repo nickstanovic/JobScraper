@@ -9,9 +9,9 @@ namespace JobScraper.Scrapers
         private readonly string _indeedUrl;
         private readonly IBrowserContext _context;
 
-        public IndeedScraper(int indeedListingAge, IBrowserContext context)
+        public IndeedScraper(string jobSearchTerm, int indeedListingAge, IBrowserContext context)
         {
-            var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(JobSearchTerm);
+            var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
             var encodedLocation = System.Web.HttpUtility.UrlEncode(Location);
             _indeedUrl =
                 $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={Radius}&fromage={indeedListingAge}";
@@ -82,7 +82,7 @@ namespace JobScraper.Scrapers
                     var job = new Job
                     {
                         Origin = "Indeed",
-                        SearchTerm = ScraperConfig.JobSearchTerm,
+                        SearchTerm = JobSearchTerm,
                         Title = titles[i],
                         CompanyName = companyNames[i],
                         Location = locations[i],
