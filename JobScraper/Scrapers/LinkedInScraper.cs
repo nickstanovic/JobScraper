@@ -58,7 +58,8 @@ namespace JobScraper.Scrapers
                     .Where(keyword => linkedinDescription.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-                if (AvoidJobKeywords.Any(uk => linkedinTitles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
+                if (AvoidJobKeywords.Any(uk => linkedinTitles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)) || 
+                    !foundKeywordsForJob.Any())
                 {
                     continue;
                 }

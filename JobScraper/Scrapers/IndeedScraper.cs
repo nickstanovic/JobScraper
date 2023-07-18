@@ -70,7 +70,7 @@ namespace JobScraper.Scrapers
                             indeedApplyUrl = href.Split('&')[0];
                     }
 
-                    var foundKeywordsForJob = ScraperConfig.Keywords
+                    var foundKeywordsForJob = Keywords
                         .Where(keyword => indeedDescription.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                         .ToList();
 
