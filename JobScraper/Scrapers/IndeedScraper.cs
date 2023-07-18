@@ -11,6 +11,7 @@ namespace JobScraper.Scrapers
 
         public IndeedScraper(string jobSearchTerm, int indeedListingAge, IBrowserContext context)
         {
+            JobSearchTerm = jobSearchTerm;
             var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
             var encodedLocation = System.Web.HttpUtility.UrlEncode(Location);
             _indeedUrl =
